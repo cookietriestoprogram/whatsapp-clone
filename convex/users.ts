@@ -30,10 +30,6 @@ export const createUser = mutation({
 export const readUser = query({
   args: {
     userId: v.string(),
-    email: v.string(),
-    createdAt: v.number(),
-    name: v.string(),
-    profileImage: v.string()
   },
   handler: async (ctx, args) => {
 

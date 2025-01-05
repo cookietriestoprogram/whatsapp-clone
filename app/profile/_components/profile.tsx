@@ -1,15 +1,28 @@
 "use client"
+
+// convex
 import { api } from "@/convex/_generated/api"
 import { Preloaded, usePreloadedQuery } from "convex/react"
+import { useMutation } from "convex/react"
+
+// icons
 import { ArrowLeft, Camera, Edit2 } from "lucide-react"
+
+// react
 import { useRouter } from "next/navigation"
 import { useState } from "react"
 import { useForm } from "react-hook-form"
 import Link from "next/link"
+
+// shadcn components
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+
+interface ProfileFormData {
+    name: string;
+}
 
 export default function ProfileComponent({preloadedUserInfo}: {
     preloadedUserInfo: Preloaded<typeof api.users.readUser>
@@ -17,7 +30,7 @@ export default function ProfileComponent({preloadedUserInfo}: {
     const router = useRouter()
     const [isEditing, setIsEditing] = useState(false)
     const userInfo = usePreloadedQuery(preloadedUserInfo)
-    // const updateUserMutation = useMutation(api.users.updateName)
+    const updateUserMutation = useMutation(api.users.updateName)
 
     const {
         register, 
@@ -30,8 +43,21 @@ export default function ProfileComponent({preloadedUserInfo}: {
         }
     })
 
-    const onSubmit = () => {
-        return
+    const onSubmit = async (data: ProfileFormData) => {
+        try {
+            if(userInfo?.userId){
+                console.log("here")
+                await updateUserMutation ({userId: userInfo.userId, name: data.name})
+            } else {
+                console.error("User ID is undefined")   
+            }
+
+            setIsEditing(false)
+            router.refresh()
+        } catch (error) {
+            console.error(error)
+
+        }
     }
     
     const handleImageChange = async () => {

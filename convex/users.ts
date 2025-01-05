@@ -1,3 +1,4 @@
+import { useQueries } from "convex/react";
 import { mutation, query } from "./_generated/server";
 import { v } from "convex/values";
 
@@ -43,5 +44,29 @@ export const readUser = query({
     } catch (error) {
       throw new Error("Reading user did not work.")
     }
+  }
+})
+
+export const updateName = mutation({
+  args: {
+    userId: v.string(),
+    name: v.string()
+  },
+  handler: async (ctx, args) => {
+    
+    const user = await ctx.db
+      .query("users")
+      .filter((q) => q.eq(q.field("userId"), args.userId))
+      .first()
+
+    if (!user) {
+      throw new Error ("User not found ")
+    }
+
+    const updateUser = await ctx.db.patch(user._id, {
+      name: args.name,
+    })
+
+    return updateUser
   }
 })

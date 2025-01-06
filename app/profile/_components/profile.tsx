@@ -4,6 +4,7 @@
 import { api } from "@/convex/_generated/api"
 import { Preloaded, usePreloadedQuery } from "convex/react"
 import { useMutation } from "convex/react"
+import { fetchMutation } from "convex/nextjs"
 
 // icons
 import { ArrowLeft, Camera, Edit2 } from "lucide-react"
@@ -19,6 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
+
 
 interface ProfileFormData {
     name: string;
@@ -60,8 +62,46 @@ export default function ProfileComponent({preloadedUserInfo}: {
         }
     }
     
-    const handleImageChange = async () => {
-        return
+    const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e?.target?.files?.[0]
+
+        if(!file) return
+
+        try {
+            const reader = new FileReader()
+            reader.onloadend = () => {
+
+            }
+
+            reader.readAsDataURL(file)
+            const postUrl = await fetchMutation(api.chats.generateUploadUrl)
+
+            const result = await fetch(postUrl, {
+                method: "POST",
+                headers: { "Content-type": file.type },
+                body: file
+            })
+
+            if (!result.ok) {
+                throw new Error (`Upload failed ${result.statusText}`)
+            }
+
+            const { storageId } = await result.json();
+
+            const url = await fetchMutation(api.chats.getUploadUrl, {
+                storageId
+            })
+
+            if (url && userInfo?.userId) {
+                await fetchMutation(api.users.updateProfileImage, {
+                    userId: userInfo?.userId,
+                    profileImage: url
+                })
+            }
+
+        } catch (error) {
+            console.error("Upload failed:", error)
+        }
     }
 
     return (
@@ -75,7 +115,7 @@ export default function ProfileComponent({preloadedUserInfo}: {
             <h1 className="text-xl font-normal">Profile</h1>
         </header>
 
-        <div className="flex-1 overflow-y-auto">
+        <div className="overflow-y-auto">
             <div className="p-4 flex flex-col items-center">
                 <div className="relative mb-6">
                     <Avatar className="h-40 w-40">
